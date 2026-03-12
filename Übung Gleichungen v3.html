@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktives Training: Gleichungen (7. Klasse)</title>
+    <style>
+        :root {
+            --primary-color: #0056b3;
+            --secondary-color: #e9ecef;
+            --success-color: #28a745;
+            --error-color: #dc3545;
+            --warning-color: #ff9800;
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            padding-bottom: 80px; /* Platz für den fixierten Timer */
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            color: #444;
+            margin-top: 0;
+        }
+
+        .info-box {
+            background-color: #e3f2fd;
+            border-left: 5px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .level {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .level.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .question-block {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: var(--secondary-color);
+            border-radius: 8px;
+        }
+
+        .math-eq {
+            font-size: 1.2em;
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+            background: #fff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 5px 0;
+        }
+
+        select, input[type="number"], input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+            margin: 5px 0;
+            transition: all 0.3s;
+        }
+
+        input[type="number"] {
+            width: 80px;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1.1em;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #004494;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .correct { color: var(--success-color); font-weight: bold; }
+        .incorrect { color: var(--error-color); font-weight: bold; }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #ddd;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 16.6%;
+            transition: width 0.4s ease;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .radio-label {
+            background: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .radio-label:hover { background: #f0f0f0; }
+        input[type="radio"] { display: none; }
+        input[type="radio"]:checked + .radio-label {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        input[type="radio"]:disabled + .radio-label {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Floating HUD (Timer & Score) */
+        #hud {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-size: 1.3em;
+            font-weight: bold;
+            display: flex;
+            gap: 20px;
+            z-index: 1000;
+            border: 2px solid var(--primary-color);
+        }
+
+        .res-msg {
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+    </style>
+</head>
+<body>
+
+<!-- Floating HUD -->
+<div id="hud">
+    <div style="color: #444;">⏱ <span id="timer-display">00:00</span></div>
+    <div style="color: #d4af37;">⭐ <span id="score-display">0</span> / 75</div>
+</div>
+
+<div class="container">
+    <h1>Gleichungen meistern! 🚀</h1>
+    <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+    <!-- Intro -->
+    <div id="level-0" class="level active">
+        <h2>Willkommen zum Gleichungs-Training!</h2>
+        <div class="info-box">
+            <p><strong>Bevor du startest:</strong> Hol dir am besten ein Blatt Papier und einen Stift (deinen Schmierzettel). Bei einigen Aufgaben wirst du Nebenrechnungen brauchen!</p>
+            <p><strong>Punktesystem:</strong> Du bekommst pro Aufgabe <strong>3 Punkte</strong>, wenn sie beim ersten Versuch stimmt. Je mehr Versuche du brauchst, desto weniger Punkte gibt es. <br>Nach <strong>3 Fehlversuchen</strong> wird dir die Lösung angezeigt (0 Punkte).</p>
+        </div>
+        <ul>
+            <li>Level 1: Fachbegriffe (Lückentext)</li>
+            <li>Level 2: Das Waagen-Modell & Kommandostriche</li>
+            <li>Level 3: Leichte Gleichungen im Kopf lösen</li>
+            <li>Level 4: Gleichungen in zwei Schritten</li>
+            <li>Level 5: Die Probe machen</li>
+            <li>Level 6: Aufräumen (Terme zusammenfassen)</li>
+        </ul>
+        <button onclick="nextLevel(1)">Training starten!</button>
+    </div>
+
+    <!-- Level 1 -->
+    <div id="level-1" class="level">
+        <h2>Level 1: Wichtige Fachbegriffe</h2>
+        <p>Wähle die passenden Wörter aus, um die Lücken aus deinem Arbeitsblatt korrekt zu füllen.</p>
+        
+        <div class="question-block">
+            Eine Gleichung besteht aus zwei 
+            <select id="l1-q1">
+                <option value="">-bitte wählen-</option>
+                <option value="Zahlen">Zahlen</option>
+                <option value="Termen">Termen</option>
+                <option value="Lösungen">Lösungen</option>
+            </select>, die man mit dem Zeichen 
+            <select id="l1-q2">
+                <option value="">-wählen-</option>
+                <option value="+">+</option>
+                <option value="=">=</option>
+                <option value="-">-</option>
+            </select> verbindet.
+        </div>
+
+        <div class="question-block">
+            Die Menge aller Zahlen, die man für die Variable in einer Gleichung einsetzen darf, heißt 
+            <select id="l1-q3">
+                <option value="">-bitte wählen-</option>
+                <option value="Lösungsmenge">Lösungsmenge</option>
+                <option value="Grundmenge">Grundmenge</option>
+                <option value="Leere Menge">Leere Menge</option>
+            </select>.
+        </div>
+
+        <div class="question-block">
+            Eine mathematische Gleichung funktioniert wie eine 
+            <select id="l1-q4">
+                <option value="">-bitte wählen-</option>
+                <option value="Wippe">Wippe</option>
+                <option value="Uhr">Uhr</option>
+                <option value="Waage">Waage</option>
+            </select>. Was du auf der einen Seite veränderst, musst du 
+            <select id="l1-q5">
+                <option value="">-bitte wählen-</option>
+                <option value="auch auf der anderen Seite">auch auf der anderen Seite</option>
+                <option value="gar nicht">gar nicht</option>
+            </select> verändern, damit das Gleichgewicht erhalten bleibt. Man nennt diese Schritte 
+            <select id="l1-q6">
+                <option value="">-bitte wählen-</option>
+                <option value="Äquivalenzumformungen">Äquivalenzumformungen</option>
+                <option value="Termumformungen">Termumformungen</option>
+            </select>.
+        </div>
+
+        <button onclick="checkLevel(1)">Antworten prüfen</button>
+        <div id="feedback-l1" style="margin-top: 10px;"></div>
+    </div>
+
+    <!-- Level 2 -->
+    <div id="level-2" class="level">
+        <h2>Level 2: Der richtige Kommandostrich</h2>
+        <p>Welchen Rechenschritt (Kommandostrich) musst du ausführen, um x alleine auf einer Seite stehen zu haben?</p>
+        
+        <div class="question-block">
+            <span class="math-eq">x + 14 = 25</span> <span id="res-l2-q1" class="res-msg"></span>
+            <div class="radio-group">
+                <label><input type="radio" name="l2-q1" value="wrong1"><span class="radio-label">| + 14</span></label>
+                <label><input type="radio" name="l2-q1" value="correct"><span class="radio-label">| - 14</span></label>
+                <label><input type="radio" name="l2-q1" value="wrong2"><span class="radio-label">| : 14</span></label>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <span class="math-eq">5x = 40</span> <span id="res-l2-q2" class="res-msg"></span>
+            <div class="radio-group">
+                <label><input type="radio" name="l2-q2" value="wrong1"><span class="radio-label">| - 5</span></label>
+                <label><input type="radio" name="l2-q2" value="wrong2"><span class="radio-label">| * 5</span></label>
+                <label><input type="radio" name="l2-q2" value="correct"><span class="radio-label">| : 5</span></label>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <span class="math-eq">x - 9 = 12</span> <span id="res-l2-q3" class="res-msg"></span>
+            <div class="radio-group">
+                <label><input type="radio" name="l2-q3" value="correct"><span class="radio-label">| + 9</span></label>
+                <label><input type="radio" name="l2-q3" value="wrong1"><span class="radio-label">| - 9</span></label>
+                <label><input type="radio" name="l2-q3" value="wrong2"><span class="radio-label">| : 9</span></label>
+            </div>
+        </div>
+
+        <button onclick="checkLevel(2)">Antworten prüfen</button>
+        <div id="feedback-l2" style="margin-top: 10px;"></div>
+    </div>
+
+    <!-- Level 3 -->
+    <div id="level-3" class="level">
+        <h2>Level 3: Kopfschalt-Zentrale</h2>
+        <p>Löse diese einfachen Gleichungen. Trage die Lösungszahl für x ein. <br><em>(G = Menge der rationalen Zahlen)</em></p>
+
+        <div class="question-block">
+            <span class="math-eq">x + 12 = 30</span> <br>
+            L = { <input type="number" id="l3-q1"> } <span id="res-l3-q1" class="res-msg"></span>
+        </div>
+        <div class="question-block">
+            <span class="math-eq">x - 15 = 5</span> <br>
+            L = { <input type="number" id="l3-q2"> } <span id="res-l3-q2" class="res-msg"></span>
+        </div>
+        <div class="question-block">
+            <span class="math-eq">4x = 36</span> <br>
+            L = { <input type="number" id="l3-q3"> } <span id="res-l3-q3" class="res-msg"></span>
+        </div>
+        <div class="question-block">
+            <span class="math-eq">x : 3 = 8</span> <br>
+            L = { <input type="number" id="l3-q4"> } <span id="res-l3-q4" class="res-msg"></span>
+        </div>
+
+        <button onclick="checkLevel(3)">Antworten prüfen</button>
+        <div id="feedback-l3" style="margin-top: 10px;"></div>
+    </div>
+
+    <!-- Level 4 -->
+    <div id="level-4" class="level">
+        <h2>Level 4: Meister der Äquivalenzumformung</h2>
+        <p>Hier brauchst du <strong>zwei Schritte</strong>. Schnapp dir deinen Schmierzettel! <br><em>(G = Menge der rationalen Zahlen)</em></p>
+
+        <div class="question-block">
+            <span class="math-eq">2x + 5 = 19</span> <br>
+            <em>Tipp: Erst | -5, dann | :2</em><br>
+            L = { <input type="number" id="l4-q1"> } <span id="res-l4-q1" class="res-msg"></span>
+        </div>
+        <div class="question-block">
+            <span class="math-eq">3x - 7 = 14</span> <br>
+            L = { <input type="number" id="l4-q2"> } <span id="res-l4-q2" class="res-msg"></span>
+        </div>
+        <div class="question-block">
+            <span class="math-eq">10 + 4x = 34</span> <br>
+            L = { <input type="number" id="l4-q3"> } <span id="res-l4-q3" class="res-msg"></span>
+        </div>
+        <div class="question-block">
+            <span class="math-eq">0,5x + 2 = 6</span> <br>
+            <em>Achtung: Dezimalbruch!</em><br>
+            L = { <input type="number" id="l4-q4"> } <span id="res-l4-q4" class="res-msg"></span>
+        </div>
+
+        <button onclick="checkLevel(4)">Antworten prüfen</button>
+        <div id="feedback-l4" style="margin-top: 10px;"></div>
+    </div>
+
+    <!-- Level 5 -->
+    <div id="level-5" class="level">
+        <h2>Level 5: Vertrauen ist gut, Probe ist besser!</h2>
+        <p>Setze die Zahl für x in die Gleichung ein. Berechne, ob auf beiden Seiten das Gleiche herauskommt. Ist die Aussage wahr oder falsch?</p>
+
+        <div class="question-block">
+            Gleichung: <span class="math-eq">4x - 3 = 17</span> <br>
+            Behauptung: <strong>L = { 5 }</strong> <span id="res-l5-q1" class="res-msg"></span>
+            <div class="radio-group">
+                <label><input type="radio" name="l5-q1" value="correct"><span class="radio-label">Wahr (Probe stimmt)</span></label>
+                <label><input type="radio" name="l5-q1" value="wrong1"><span class="radio-label">Falsch</span></label>
+            </div>
+        </div>
+
+        <div class="question-block">
+            Gleichung: <span class="math-eq">7x + 2 = 30</span> <br>
+            Behauptung: <strong>L = { 3 }</strong> <span id="res-l5-q2" class="res-msg"></span>
+            <div class="radio-group">
+                <label><input type="radio" name="l5-q2" value="wrong1"><span class="radio-label">Wahr (Probe stimmt)</span></label>
+                <label><input type="radio" name="l5-q2" value="correct"><span class="radio-label">Falsch</span></label>
+            </div>
+        </div>
+
+        <div class="question-block">
+            Gleichung: <span class="math-eq">12 - 2x = 4</span> <br>
+            Behauptung: <strong>L = { 4 }</strong> <span id="res-l5-q3" class="res-msg"></span>
+            <div class="radio-group">
+                <label><input type="radio" name="l5-q3" value="correct"><span class="radio-label">Wahr (Probe stimmt)</span></label>
+                <label><input type="radio" name="l5-q3" value="wrong1"><span class="radio-label">Falsch</span></label>
+            </div>
+        </div>
+
+        <button onclick="checkLevel(5)">Antworten prüfen</button>
+        <div id="feedback-l5" style="margin-top: 10px;"></div>
+    </div>
+
+    <!-- Level 6 -->
+    <div id="level-6" class="level">
+        <h2>Level 6: Aufräumen (Terme zusammenfassen)</h2>
+        <p><strong>Fasse zuerst die Terme zusammen</strong> (x mit x, und Zahlen mit Zahlen), bevor du den Kommandostrich anwendest! <br><em>(G = Menge der rationalen Zahlen)</em></p>
+        
+        <div class="info-box">
+            <p><em>Beispiel:</em> <span class="math-eq" style="font-size:1em; margin:0;">3x + 6 + 2x - 8 = 7</span> &rarr; <span class="math-eq" style="font-size:1em; margin:0;">5x - 2 = 7</span></p>
+        </div>
+
+        <div class="question-block">
+            <span class="math-eq">3x + 6 + 2x - 8 = 13</span> <br>
+            L = { <input type="number" id="l6-q1"> } <span id="res-l6-q1" class="res-msg"></span>
+        </div>
+        <div class="question-block">
+            <span class="math-eq">7 + 4x - 2 - x = 14</span> <br>
+            L = { <input type="number" id="l6-q2"> } <span id="res-l6-q2" class="res-msg"></span>
+        </div>
+        <div class="question-block">
+            <span class="math-eq">8x - 15 - 2x + 3 = 12</span> <br>
+            L = { <input type="number" id="l6-q3"> } <span id="res-l6-q3" class="res-msg"></span>
+        </div>
+        <div class="question-block">
+            <span class="math-eq">x + x + x + 10 - 4 = 21</span> <br>
+            L = { <input type="number" id="l6-q4"> } <span id="res-l6-q4" class="res-msg"></span>
+        </div>
+        <div class="question-block">
+            <span class="math-eq">10x - 5x + 8 - 12 = 16</span> <br>
+            L = { <input type="number" id="l6-q5"> } <span id="res-l6-q5" class="res-msg"></span>
+        </div>
+
+        <button onclick="checkLevel(6)">Antworten prüfen</button>
+        <div id="feedback-l6" style="margin-top: 10px;"></div>
+    </div>
+
+    <!-- Final Screen -->
+    <div id="level-7" class="level" style="text-align: center;">
+        <h2 style="font-size: 2.5em;">🎉 Training beendet! 🎉</h2>
+        <div class="info-box" style="font-size: 1.3em;">
+            <p><strong>Deine erreichte Punktzahl:</strong> <br><span style="font-size: 2em; color: var(--primary-color);" id="final-score">0</span> / 75 ⭐</p>
+            <p><strong>Benötigte Zeit:</strong> <br><span style="font-size: 1.5em; color: #444;" id="final-time">00:00</span> ⏱</p>
+        </div>
+        <p style="font-size: 1.1em;">Du hast dich tapfer durch die Gleichungen gekämpft. Die Regeln der Waage und das Zusammenfassen der Terme hast du jetzt super geübt!</p>
+        <button onclick="location.reload()" style="max-width: 250px;">Übung neustarten</button>
+    </div>
+
+</div>
+
+<script>
+    // System Variables
+    const totalLevels = 6;
+    let score = 0;
+    let secondsElapsed = 0;
+    let timerId = null;
+    let qStats = {}; // Speichert: { attempts: 0, solved: false }
+    
+    // Konfiguration aller Fragen (ID, Typ, Richtige Antwort)
+    const questionsData = {
+        1: [
+            { id: 'l1-q1', type: 'select', correctVal: 'Termen' },
+            { id: 'l1-q2', type: 'select', correctVal: '=' },
+            { id: 'l1-q3', type: 'select', correctVal: 'Grundmenge' },
+            { id: 'l1-q4', type: 'select', correctVal: 'Waage' },
+            { id: 'l1-q5', type: 'select', correctVal: 'auch auf der anderen Seite' },
+            { id: 'l1-q6', type: 'select', correctVal: 'Äquivalenzumformungen' }
+        ],
+        2: [
+            { id: 'l2-q1', type: 'radio', correctVal: 'correct' },
+            { id: 'l2-q2', type: 'radio', correctVal: 'correct' },
+            { id: 'l2-q3', type: 'radio', correctVal: 'correct' }
+        ],
+        3: [
+            { id: 'l3-q1', type: 'number', correctVal: 18 },
+            { id: 'l3-q2', type: 'number', correctVal: 20 },
+            { id: 'l3-q3', type: 'number', correctVal: 9 },
+            { id: 'l3-q4', type: 'number', correctVal: 24 }
+        ],
+        4: [
+            { id: 'l4-q1', type: 'number', correctVal: 7 },
+            { id: 'l4-q2', type: 'number', correctVal: 7 },
+            { id: 'l4-q3', type: 'number', correctVal: 6 },
+            { id: 'l4-q4', type: 'number', correctVal: 8 }
+        ],
+        5: [
+            { id: 'l5-q1', type: 'radio', correctVal: 'correct' },
+            { id: 'l5-q2', type: 'radio', correctVal: 'correct' },
+            { id: 'l5-q3', type: 'radio', correctVal: 'correct' }
+        ],
+        6: [
+            { id: 'l6-q1', type: 'number', correctVal: 3 },
+            { id: 'l6-q2', type: 'number', correctVal: 3 },
+            { id: 'l6-q3', type: 'number', correctVal: 4 },
+            { id: 'l6-q4', type: 'number', correctVal: 5 },
+            { id: 'l6-q5', type: 'number', correctVal: 4 }
+        ]
+    };
+
+    // Timer Funktionen
+    function startTimer() {
+        if(timerId !== null) return;
+        timerId = setInterval(() => {
+            secondsElapsed++;
+            let m = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+            let s = (secondsElapsed % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').innerText = `${m}:${s}`;
+        }, 1000);
+    }
+    
+    function stopTimer() {
+        clearInterval(timerId);
+    }
+
+    // Navigation & Start
+    function nextLevel(levelNum) {
+        if (levelNum === 1) startTimer();
+
+        document.querySelectorAll('.level').forEach(el => el.classList.remove('active'));
+        document.getElementById('level-' + levelNum).classList.add('active');
+        
+        let progressPercent = (levelNum / totalLevels) * 100;
+        if(progressPercent > 100) progressPercent = 100;
+        document.getElementById('progress').style.width = progressPercent + '%';
+        
+        window.scrollTo(0, 0);
+    }
+
+    // Hilfsfunktion: Eine einzelne Frage prüfen
+    function evaluateQuestion(id, type, correctVal) {
+        if (!qStats[id]) qStats[id] = { attempts: 0, solved: false };
+        if (qStats[id].solved) return true; // Bereits fertig
+
+        let el = document.getElementById(id);
+        let isCorrect = false;
+
+        // Eingabe auslesen
+        if (type === 'select') {
+            isCorrect = (el.value === correctVal);
+        } else if (type === 'number') {
+            let val = parseFloat(el.value.replace(',', '.'));
+            isCorrect = (val === correctVal);
+        } else if (type === 'radio') {
+            let selected = document.querySelector(`input[name="${id}"]:checked`);
+            isCorrect = (selected && selected.value === correctVal);
+        }
+
+        // Ergebnis auswerten
+        if (isCorrect) {
+            qStats[id].solved = true;
+            let pts = 3 - qStats[id].attempts;
+            if (pts < 1) pts = 1;
+            score += pts;
+            document.getElementById('score-display').innerText = score;
+            markUI(id, type, 'correct', correctVal);
+            return true;
+        } else {
+            qStats[id].attempts++;
+            if (qStats[id].attempts >= 3) {
+                // 3 Fehlversuche -> Lösen & Sperren, 0 Punkte
+                qStats[id].solved = true;
+                markUI(id, type, 'revealed', correctVal);
+                return true; 
+            } else {
+                markUI(id, type, 'wrong', correctVal);
+                return false;
+            }
+        }
+    }
+
+    // Hilfsfunktion: Optisches Feedback in der Benutzeroberfläche
+    function markUI(id, type, state, correctVal) {
+        let el = document.getElementById(id);
+        let resSpan = document.getElementById('res-' + id);
+        let triesLeft = 3 - qStats[id].attempts;
+        
+        if (type === 'select') {
+            if (state === 'correct') {
+                el.style.borderColor = 'var(--success-color)'; el.style.backgroundColor = '#e8f5e9'; el.disabled = true;
+            } else if (state === 'wrong') {
+                el.style.borderColor = 'var(--error-color)'; el.style.backgroundColor = '#ffebee';
+            } else if (state === 'revealed') {
+                el.value = correctVal;
+                el.style.borderColor = 'var(--warning-color)'; el.style.backgroundColor = '#fff3e0'; el.disabled = true;
+            }
+        } else if (type === 'number') {
+            if (state === 'correct') {
+                el.style.borderColor = 'var(--success-color)'; el.readOnly = true; el.style.backgroundColor = '#e8f5e9';
+                if(resSpan) resSpan.innerHTML = '<span style="color:var(--success-color)">✅ Richtig!</span>';
+            } else if (state === 'wrong') {
+                el.style.borderColor = 'var(--error-color)'; el.style.backgroundColor = '#ffebee';
+                if(resSpan) resSpan.innerHTML = `<span style="color:var(--error-color)">❌ Falsch (${triesLeft} Versuche übrig)</span>`;
+            } else if (state === 'revealed') {
+                el.value = correctVal;
+                el.style.borderColor = 'var(--warning-color)'; el.readOnly = true; el.style.backgroundColor = '#fff3e0';
+                if(resSpan) resSpan.innerHTML = ` <span style="color:var(--warning-color);">Lösung: ${correctVal}</span>`;
+            }
+        } else if (type === 'radio') {
+            if (state === 'correct') {
+                document.querySelectorAll(`input[name="${id}"]`).forEach(r => r.disabled = true);
+                if(resSpan) resSpan.innerHTML = '<span style="color:var(--success-color)">✅ Richtig!</span>';
+            } else if (state === 'wrong') {
+                if(resSpan) resSpan.innerHTML = `<span style="color:var(--error-color)">❌ Falsch (${triesLeft} Versuche übrig)</span>`;
+            } else if (state === 'revealed') {
+                let correctRadio = document.querySelector(`input[name="${id}"][value="${correctVal}"]`);
+                if(correctRadio) correctRadio.checked = true;
+                document.querySelectorAll(`input[name="${id}"]`).forEach(r => r.disabled = true);
+                if(resSpan) resSpan.innerHTML = ` <span style="color:var(--warning-color);">Aufgelöst!</span>`;
+            }
+        }
+    }
+
+    // Allgemeiner Level-Check
+    function checkLevel(levelNum) {
+        let allDone = true;
+        let qArray = questionsData[levelNum];
+
+        // Alle Fragen des Levels checken
+        for (let q of qArray) {
+            let done = evaluateQuestion(q.id, q.type, q.correctVal);
+            if (!done) allDone = false;
+        }
+
+        let fb = document.getElementById(`feedback-l${levelNum}`);
+        if (allDone) {
+            if (levelNum === 6) {
+                fb.innerHTML = `<span class="correct">✅ Alle Aufgaben beendet!</span> <button onclick="showFinalScreen()" style="width: auto; margin-left: 10px; padding: 5px 15px;">Ergebnis anzeigen</button>`;
+            } else {
+                fb.innerHTML = `<span class="correct">✅ Abschnitt geschafft!</span> <button onclick="nextLevel(${levelNum + 1})" style="width: auto; margin-left: 10px; padding: 5px 15px;">Zum nächsten Level</button>`;
+            }
+        } else {
+            fb.innerHTML = '<span class="incorrect">❌ Einige Aufgaben sind noch falsch. Verbessere sie (achte auf die Versuche)!</span>';
+        }
+    }
+
+    // Abschluss-Bildschirm
+    function showFinalScreen() {
+        stopTimer();
+        let finalTime = document.getElementById('timer-display').innerText;
+        document.getElementById('final-score').innerText = score;
+        document.getElementById('final-time').innerText = finalTime;
+        
+        // HUD ausblenden auf dem Final Screen
+        document.getElementById('hud').style.display = 'none';
+        
+        nextLevel(7);
+    }
+</script>
+
+</body>
+</html>
