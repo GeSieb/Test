@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktive Übung: Lineare Gleichungen lösen</title>
+    <style>
+        /* Farbschema: #468145 (Dunkelgrün), #000000 (Text), #dbe8ce (Heller Hintergrund), #c1cfb3 (Rahmen/Akzente) */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #dbe8ce;
+            color: #000000;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #468145;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            margin-bottom: 30px;
+            font-style: italic;
+            color: #333;
+        }
+
+        .container {
+            background-color: white;
+            border: 3px solid #c1cfb3;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 650px;
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .progress {
+            font-weight: bold;
+            color: #468145;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            border-bottom: 2px solid #c1cfb3;
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .task-text {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            font-size: 1.2rem;
+            padding: 10px;
+            width: 120px;
+            border: 2px solid #c1cfb3;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #468145;
+        }
+
+        button {
+            background-color: #468145;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #356233;
+        }
+
+        button:disabled {
+            background-color: #c1cfb3;
+            cursor: not-allowed;
+        }
+
+        .feedback {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 1.1rem;
+            line-height: 1.4;
+        }
+
+        .feedback.error {
+            background-color: #ffeaea;
+            border: 1px solid #ffc2c2;
+            color: #d80000;
+        }
+
+        .feedback.warning {
+            background-color: #fff8d6;
+            border: 1px solid #ffe885;
+            color: #8c6d00;
+        }
+
+        .feedback.success {
+            background-color: #e6f4e6;
+            border: 1px solid #468145;
+            color: #468145;
+        }
+
+        #nextBtn {
+            display: none;
+            width: 100%;
+            background-color: #2c522b;
+        }
+
+        /* End Screen Styles */
+        #endScreen {
+            display: none;
+            text-align: center;
+        }
+
+        .huge-score {
+            font-size: 7rem;
+            font-weight: bold;
+            color: #468145;
+            margin: 20px 0;
+            line-height: 1;
+        }
+
+        /* Timer in the bottom left */
+        .timer-widget {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: #468145;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Mathe-Challenge</h1>
+    <div class="subtitle">Textaufgaben mit linearen Gleichungen</div>
+
+    <div class="container" id="taskContainer">
+        <div class="progress">
+            <span id="progressText">Aufgabe 1 von 10</span>
+            <span id="scoreText">Punkte: 0</span>
+        </div>
+        
+        <div class="task-text" id="taskText">Lade Aufgabe...</div>
+        
+        <div class="input-group">
+            <!-- Beschriftung bewusst offen gehalten für die Variablen-Zuordnung -->
+            <label for="answerInput" style="font-weight:bold; font-size:1.2rem;">Lösung (x) = </label>
+            <input type="text" id="answerInput" placeholder="Zahl..." onkeypress="handleEnter(event)">
+            <button id="checkBtn" onclick="checkAnswer()">Prüfen</button>
+        </div>
+
+        <div id="feedbackArea" class="feedback"></div>
+
+        <button id="nextBtn" onclick="nextTask()">Weiter zur nächsten Aufgabe</button>
+    </div>
+
+    <div class="container" id="endScreen">
+        <h1 style="font-size: 2.5rem;">Übung beendet!</h1>
+        <p style="font-size: 1.5rem; margin-top: 20px;">Deine erreichte Punktzahl:</p>
+        <div class="huge-score" id="finalScore">0</div>
+        <p style="font-size: 1.5rem; color: #555;">Maximal möglich: 30 Punkte</p>
+        <p style="font-size: 1.2rem; margin-top: 30px;" id="finalTimeText"></p>
+    </div>
+
+    <div class="timer-widget" id="timer">⏱️ 00:00</div>
+
+    <script>
+        // Array mit den 10 Aufgaben (Aufsteigende Schwierigkeit, ab Aufg. 5 ohne "x" im Text)
+        const tasks = [
+            {
+                text: "Tom und Lisa sammeln Kastanien. Tom findet 3 Hände voll (jeweils x Kastanien). Lisa findet 2 Hände voll (auch je x Kastanien). Zusammen haben sie 10 Kastanien. Wie viele Kastanien sind in einer Hand (x)?",
+                equation: "3x + 2x = 10",
+                answer: 2,
+                sentence: "In einer Hand sind 2 Kastanien."
+            },
+            {
+                text: "In einer Klasse sammeln die Schüler Geld für einen Ausflug. Tim bezahlt für 2 Lose, Anna für 4 Lose und Max für 1 Los. Jedes Los kostet x Euro. Insgesamt haben sie 21 Euro eingesammelt. Was kostet ein Los (x)?",
+                equation: "2x + 4x + 1x = 21",
+                answer: 3,
+                sentence: "Ein Los kostet 3 Euro."
+            },
+            {
+                text: "Ein Bauer pflanzt Bäume. Er hat am Anfang 5 Bäume gepflanzt. Dann kauft er 2 Pakete mit je x Bäumen und später noch 3 Pakete mit je x Bäumen. Zum Schluss kauft er noch 4 einzelne Bäume. Insgesamt hat er nun 29 Bäume. Wie viele Bäume sind in einem Paket (x)?",
+                equation: "5 + 2x + 3x + 4 = 29",
+                answer: 4,
+                sentence: "In einem Paket sind 4 Bäume."
+            },
+            {
+                text: "Maria joggt an drei Tagen. Am ersten Tag läuft sie 2x km, am zweiten Tag 1,5x km und am dritten Tag 0,5x km. Zusätzlich läuft sie am Wochenende noch entspannte 4 km. Insgesamt ist sie 20 km gelaufen. Welche Zahl steht für x?",
+                equation: "2x + 1,5x + 0,5x + 4 = 20",
+                answer: 4,
+                sentence: "x steht für 4."
+            },
+            {
+                text: "Ein Handwerker berechnet 50 Euro Anfahrt. Er arbeitet zwei volle Stunden und berechnet dafür jeweils seinen festen Stundenlohn. Für das Material verlangt er 35 Euro. Für eine angebrochene dritte Stunde berechnet er exakt die Hälfte seines normalen Stundenlohns. Die Gesamtrechnung beträgt 185 Euro. Was kostet eine volle Arbeitsstunde?",
+                equation: "50 + x + x + 35 + 0,5x = 185",
+                answer: 40,
+                sentence: "Eine volle Arbeitsstunde kostet 40 Euro."
+            },
+            {
+                text: "In einem Sparschwein sind am Anfang 12,50 Euro. Leon wirft an drei aufeinanderfolgenden Tagen jeweils die gleiche Münze ein. Seine Oma gibt ihm noch 15 Euro als Geldschein dazu. Später findet Leon noch zwei weitere dieser Münzen und wirft sie ebenfalls in das Sparschwein. Am Ende sind 47,50 Euro im Sparschwein. Welchen Wert hat eine dieser eingeworfenen Münzen?",
+                equation: "12,5 + 3x + 15 + 2x = 47,5",
+                answer: 4,
+                sentence: "Eine eingeworfene Münze hat den Wert von 4 Euro (bzw. er wirft jeweils 4 Euro ein)."
+            },
+            {
+                text: "Ein Roboter wird programmiert, eine bestimmte Basis-Distanz mehrfach abzufahren. Er fährt erst das Vierfache dieser Distanz nach vorne, rutscht dann 50 Meter zurück. Anschließend fährt er das Dreifache der Basis-Distanz nach vorne und rutscht wieder 20 Meter zurück. Schließlich erreicht er nach weiteren 90 Metern nach vorne sein Ziel. Die Gesamtstrecke vom Start bis zum Ziel beträgt exakt 160 Meter. Wie lang ist die gesuchte Basis-Distanz?",
+                equation: "4x - 50 + 3x - 20 + 90 = 160",
+                answer: 20,
+                sentence: "Die gesuchte Basis-Distanz beträgt 20 Meter."
+            },
+            {
+                text: "Ein Bäcker hat 100 kg Mehl im Lager. Er verbraucht am Montag zwei gleich große Säcke Mehl, am Dienstag fünf solcher Säcke. Am Mittwoch bekommt er 15 kg Mehl lose geliefert. Am Donnerstag verbraucht er noch einmal exakt einen solchen Sack Mehl. Danach hat er noch genau 35 kg übrig. Wie viele Kilogramm Mehl sind in einem Sack?",
+                equation: "100 - 2x - 5x + 15 - 1x = 35",
+                answer: 10,
+                sentence: "In einem Sack sind 10 kg Mehl."
+            },
+            {
+                text: "Ein LKW wird beladen. Zuerst kommen 3 gleich schwere Kisten auf die Ladefläche, dann 2 andere Holzkisten mit je 45 kg. Eine der ersten Kisten wird wieder abgeladen, da sie kaputt ist. Dann kommen noch 4 weitere Kisten von der ersten Sorte und eine Maschine mit 120,5 kg hinzu. Das Gesamtgewicht der Ladung beträgt nun 510,5 kg. Wie schwer ist eine der gleich schweren Kisten?",
+                equation: "3x + 2 * 45 - x + 4x + 120,5 = 510,5",
+                answer: 50,
+                sentence: "Eine der gleich schweren Kisten wiegt 50 kg."
+            },
+            {
+                text: "Ein Seil ist zu Beginn 15,2 m lang. Ein Pfadfinder schneidet zuerst 3 exakt gleich lange Stücke ab. Dann schneidet er 2,5 m für einen großen Knoten ab und wirft den Rest weg. Danach schneidet er nochmal 4 Stücke in der exakt gleichen Länge ab wie ganz am Anfang. Es bleibt am Ende ein Rest von 1,5 m übrig. Wie lang ist ein solches abgeschnittenes Stück?",
+                equation: "15,2 - 3x - 2,5 - 4x = 1,5",
+                answer: 1.6,
+                sentence: "Ein abgeschnittenes Stück ist 1,6 m lang."
+            }
+        ];
+
+        let currentTaskIndex = 0;
+        let attempts = 0;
+        let totalScore = 0;
+        
+        let timeElapsed = 0;
+        let timerInterval;
+
+        window.onload = function() {
+            startTimer();
+            loadTask();
+        };
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeElapsed++;
+                document.getElementById('timer').innerText = "⏱️ " + formatTime(timeElapsed);
+            }, 1000);
+        }
+
+        function formatTime(seconds) {
+            let m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            let s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function loadTask() {
+            attempts = 0;
+            const task = tasks[currentTaskIndex];
+            
+            document.getElementById('progressText').innerText = `Aufgabe ${currentTaskIndex + 1} von ${tasks.length}`;
+            document.getElementById('scoreText').innerText = `Punkte: ${totalScore}`;
+            document.getElementById('taskText').innerText = task.text;
+            
+            const inputField = document.getElementById('answerInput');
+            inputField.value = '';
+            inputField.disabled = false;
+            inputField.focus();
+
+            document.getElementById('checkBtn').disabled = false;
+            document.getElementById('nextBtn').style.display = 'none';
+            
+            hideFeedback();
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter' && !document.getElementById('checkBtn').disabled) {
+                checkAnswer();
+            }
+        }
+
+        function checkAnswer() {
+            const inputRaw = document.getElementById('answerInput').value;
+            // Kommas in Punkte umwandeln für Dezimalzahlen
+            const inputCleaned = inputRaw.replace(',', '.').trim(); 
+            
+            if (inputCleaned === '') return; // Leere Eingabe ignorieren
+
+            const userAnswer = parseFloat(inputCleaned);
+            const task = tasks[currentTaskIndex];
+
+            // Prüfung auf Richtigkeit
+            if (userAnswer === task.answer) {
+                // Richtig! Punktevergabe: 1. Versuch = 3P, 2. Versuch = 2P, 3. Versuch = 1P
+                let points = 0;
+                if (attempts === 0) points = 3;
+                else if (attempts === 1) points = 2;
+                else if (attempts === 2) points = 1;
+
+                totalScore += points;
+                document.getElementById('scoreText').innerText = `Punkte: ${totalScore}`;
+                showFeedback(`Richtig! 🎉 Du erhältst dafür ${points} Punkt(e).`, 'success');
+                lockTask();
+            } else {
+                // Falsch
+                attempts++;
+                
+                if (attempts === 1) {
+                    // Nach 1. Fehlversuch
+                    showFeedback('Leider falsch. Versuch es noch einmal! <br><small>(Noch 2 Versuche, es gibt noch 2 Punkte)</small>', 'error');
+                } else if (attempts === 2) {
+                    // Nach 2. Fehlversuch -> Gleichung als Tipp einblenden
+                    showFeedback(`Immer noch nicht ganz richtig. <br><br><b>Tipp:</b> Wenn man den Text übersetzt, entsteht diese Gleichung. Fasse sie zusammen:<br><strong style="font-size: 1.3rem; display:block; margin: 10px 0;">${task.equation}</strong>Versuche es ein letztes Mal! <br><small>(Noch 1 Versuch für 1 Punkt)</small>`, 'warning');
+                } else if (attempts >= 3) {
+                    // Nach 3. Fehlversuch -> Keine Punkte mehr, Lösung anzeigen
+                    showFeedback(`Leider wieder falsch. Keine Versuche mehr übrig.<br><br>Die richtige Lösung ist: <strong>${task.answer}</strong><br><br><em>Antwortsatz: ${task.sentence}</em>`, 'error');
+                    lockTask();
+                }
+            }
+        }
+
+        function lockTask() {
+            document.getElementById('answerInput').disabled = true;
+            document.getElementById('checkBtn').disabled = true;
+            document.getElementById('nextBtn').style.display = 'block';
+        }
+
+        function showFeedback(message, type) {
+            const fb = document.getElementById('feedbackArea');
+            fb.innerHTML = message;
+            fb.className = `feedback ${type}`;
+            fb.style.display = 'block';
+        }
+
+        function hideFeedback() {
+            document.getElementById('feedbackArea').style.display = 'none';
+        }
+
+        function nextTask() {
+            currentTaskIndex++;
+            if (currentTaskIndex < tasks.length) {
+                loadTask();
+            } else {
+                showEndScreen();
+            }
+        }
+
+        function showEndScreen() {
+            clearInterval(timerInterval); // Stoppt die Uhr
+            
+            document.getElementById('taskContainer').style.display = 'none';
+            document.getElementById('endScreen').style.display = 'block';
+            
+            document.getElementById('finalScore').innerText = totalScore;
+            
+            let minutes = Math.floor(timeElapsed / 60);
+            let seconds = timeElapsed % 60;
+            document.getElementById('finalTimeText').innerText = `Du hast für alle 10 Aufgaben ${minutes} Minuten und ${seconds} Sekunden gebraucht.`;
+        }
+    </script>
+</body>
+</html>
